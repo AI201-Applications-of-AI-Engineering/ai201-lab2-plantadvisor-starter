@@ -73,7 +73,11 @@ the broadest net, so they go last.
 *Aliases are stored as a list of strings. How will you check if the normalized input matches any alias in the list? Write your approach in pseudocode or plain English.*
 
 ```
-[your answer here]
+I will check through the list of strings one at a time. For each string in the list, I'll lowercase + remove whitespace from it, and check to see whether it matches the search. If it matches even one in the list, then we have found the plant that we want; if we do not have any matches, then we have ran out of options and do not know the plant that the user wants.
+
+To make sure that the 3 methods are can be found, we will make a normalization function that truncates and simplifies the 3 methods WITH the user input to make sure that the user input and the different methods are a match. This make sures that casing and whitespaces do not affect the matching. 
+
+For example, "snake_plant" should be a match for "snake plant".
 ```
 
 ---
@@ -83,7 +87,7 @@ the broadest net, so they go last.
 *When a plant isn't found, the agent will read your message and use it to decide what to tell the user. Write the exact string you'll return — make it useful to the agent, not just to a human reading logs.*
 
 ```
-[your answer here]
+If the plant that the user is searching for is not found in the database, do not use general knowledge to answer the question; say that the searched plant is not found within the database.
 ```
 
 ---
@@ -94,17 +98,17 @@ the broadest net, so they go last.
 
 **Test: does `"devil's ivy"` return the pothos entry?**
 ```
-[yes / no — if no, describe what happened]
+Yes. It returns Pothos as the display name, and shows devil's ivy in the aliases.
 ```
 
 **Test: does `"SNAKE PLANT"` return the snake plant entry?**
 ```
-[yes / no — if no, describe what happened]
+Yes.
 ```
 
 **One edge case you discovered while implementing:**
 ```
-[your answer here]
+In order to get the correct results, we need to make sure both the user input and our search are filtered properly. This means for user input and for our lookup, they both need to be filtered using a normalization function, so that they come out equal. Furthermore, if we are worried about time complexity, we can sacrifice a bit of memory to ensure that the lookups are a lot faster with a hashmap. 
 ```
 
 ---
@@ -186,12 +190,12 @@ The full season dict from `_season_data`, plus a `detected_season` boolean. Exam
 
 **Test: does calling with `season=None` return the correct season for the current month?**
 ```
-Current month: [month]
-Expected season: [season]
-Returned season: [season]
+Current month: [June]
+Expected season: [Summer]
+Returned season: [Summer]
 ```
 
 **Test: does calling with `season="winter"` return winter data regardless of the current month?**
 ```
-[yes / no]
+yes
 ```

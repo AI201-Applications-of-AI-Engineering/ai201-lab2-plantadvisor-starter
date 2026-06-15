@@ -52,10 +52,33 @@ def lookup_plant(plant_name: str) -> dict:
 
     Before writing code, complete the lookup_plant section of specs/tool-functions-spec.md.
     """
+
+    # Normalize both the input and every stored value the same way before
+    # comparing: strip whitespace, lowercase, and treat underscores and spaces
+    # as equivalent so "snake_plant" matches "snake plant".
+    def _norm(value: str) -> str:
+        return value.strip().lower().replace("_", " ")
+
+    normalized = _norm(plant_name)
+
+    # Search order: direct key -> display name -> scientific name -> aliases.
+    for key, plant in _plant_db.items():
+        if (
+            normalized == _norm(key)
+            or normalized == _norm(plant["display_name"])
+            or normalized == _norm(plant["scientific_name"])
+            or any(normalized == _norm(alias) for alias in plant["aliases"])
+        ):
+            return {"found": True, "plant": plant}
+
     return {
         "found": False,
-        "name": plant_name,
-        "message": "Plant lookup not yet implemented. Complete Milestone 1.",
+        "name": normalized,
+        "message": (
+            "If the plant that the user is searching for is not found in the "
+            "database, do not use general knowledge to answer the question; say "
+            "that the searched plant is not found within the database."
+        ),
     }
 
 
