@@ -91,7 +91,11 @@ def dispatch_tool(tool_name: str, tool_args: dict) -> str:
         tool_args = {}
     print(f"  → Tool call: {tool_name}({tool_args})")
     if tool_name == "lookup_plant":
-        result = lookup_plant(tool_args["plant_name"])
+        plant_name = tool_args.get("plant_name")
+        if not plant_name:
+            result = {"error": "lookup_plant requires a 'plant_name' argument."}
+        else:
+            result = lookup_plant(plant_name)
     elif tool_name == "get_seasonal_conditions":
         result = get_seasonal_conditions(tool_args.get("season"))
     else:
@@ -132,4 +136,62 @@ def run_agent(user_message: str, history: list) -> str:
 
     Before writing code, complete specs/agent-loop-spec.md.
     """
-    return "🌱 Agent not yet implemented. Complete Milestone 2 to activate the Plant Advisor."
+
+    FALLBACK = (
+        "Sorry — I ran into a problem working through that. "
+        "Could you rephrase your question or narrow it down?"
+    )
+
+    # Build the messages list: system prompt + replayed history + new user
+    # message. Use .get() because Gradio may include entries missing role/content.
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for msg in history:
+        messages.append({"role": msg.get("role"), "content": msg.get("content")})
+    messages.append({"role": "user", "content": user_message})
+
+    try:
+        # One iteration == one tool round. Bounded by MAX_TOOL_ROUNDS so a model
+        # that keeps requesting tools (e.g. retrying lookups for a plant not in
+        # the database) can never loop forever.
+        for _ in range(MAX_TOOL_ROUNDS):
+            response = _client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=messages,
+                tools=TOOL_DEFINITIONS,
+                tool_choice="auto",
+            )
+            assistant_message = response.choices[0].message
+
+            # Condition A: no tool calls means the LLM has its final answer.
+            if not assistant_message.tool_calls:
+                return assistant_message.content or FALLBACK
+
+            # The assistant message (with tool_calls) must be appended BEFORE
+            # any tool results — the API requires that ordering.
+            messages.append(assistant_message)
+
+            # One "tool" message per tool call, appended inside the loop so each
+            # call gets its matching result.
+            for tool_call in assistant_message.tool_calls:
+                tool_name = tool_call.function.name
+                raw_args = tool_call.function.arguments
+                try:
+                    tool_args = json.loads(raw_args) if raw_args else {}
+                except json.JSONDecodeError:
+                    tool_args = {}
+                if not isinstance(tool_args, dict):
+                    tool_args = {}
+
+                tool_result = dispatch_tool(tool_name, tool_args)
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": tool_result,
+                })
+
+        # Condition B: MAX_TOOL_ROUNDS reached without a final answer.
+        return FALLBACK
+    except Exception as e:
+        print(f"  ✗ Agent error: {e}")
+        return FALLBACK

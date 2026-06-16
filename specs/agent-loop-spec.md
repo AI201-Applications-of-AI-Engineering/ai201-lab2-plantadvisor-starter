@@ -129,7 +129,11 @@ for tool_call in assistant_message.tool_calls:
 *The loop should stop when: (a) the LLM returns a response with no tool calls, OR (b) the MAX_TOOL_ROUNDS limit is reached. Describe how you will detect each condition and what you will return in each case.*
 
 ```
-[your answer here]
+A. The LLM returns a response with no tool calls.
+    We can do this by checking if there are any tool calls first in "Detecting tool calls in response" (if not assistant_message.tool_calls). If there are no tool calls, then we can append and return the final message to "messages". If there are tool calls, then we have to make sure that when the tool returns the message, there are no more tool calls after that. If there are, then we have to use a loop continuously until there are no more tool calls.
+
+B. the MAX_TOOL_ROUNDS limit is reached.
+    We can detect this limit each time we loop a tool call. What this means is that every time we call a tool, we increment a counter and continue until it reaches the limit. Once the limit is reached, if we are unable to reach a decisive answer, we return a statement such as "unable to find the plant".
 ```
 
 ---
@@ -139,7 +143,7 @@ for tool_call in assistant_message.tool_calls:
 *Once the loop exits because there are no more tool calls, how do you extract the text content from the response object? What field holds the string you should return?*
 
 ```
-[your answer here]
+We extract the text content by checking assistant_message. This field should hold the response the LLM created using the tools provided. 
 ```
 
 ---
@@ -152,19 +156,25 @@ for tool_call in assistant_message.tool_calls:
 
 ```
 Query: "How should I care for my calathea?"
-Round 1 tool call: [tool name, args]
-Round 2 tool call: [tool name, args] (if any)
-Final response: [brief description]
+Round 1 tool call: lookup_plant({'plant_name': 'calathea'})
+Round 2 tool call: get_seasonal_conditions({})
+Final response: According to the care data for your calathea, you should keep the soil consistently moist but not soggy, and use filtered, distilled, or rainwater to prevent brown edges. The plant prefers indirect or filtered light and requires high humidity (50%+). It's also sensitive to cold drafts and temperatures below 55°F.
+
+In the current season (summer), it's essential to increase humidity, water consistently, and keep the plant out of direct sun. You can fertilize your calathea monthly with a diluted balanced fertilizer during the growing season.
+
+Some common issues to watch out for include brown leaf edges from tap water minerals or dry air, leaf curling from underwatering or low humidity, and yellowing from overwatering. Remember to check the soil every few days, as the hot weather and air conditioning can dry the soil faster.
+
+If you have any further questions or concerns, feel free to ask.
 ```
 
 **What happens when you ask about a plant that isn't in the database?**
 
 ```
-[describe the behavior you observed]
+It mentions "couldn't find any information on a houseplant named "***".
 ```
 
 **One thing about the tool call API that surprised you:**
 
 ```
-[your answer here]
+Its able to determine the actual month without me giving it!
 ```
