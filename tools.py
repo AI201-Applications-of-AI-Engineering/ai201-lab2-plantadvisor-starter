@@ -76,8 +76,8 @@ def lookup_plant(plant_name: str) -> dict:
         "name": normalized,
         "message": (
             "If the plant that the user is searching for is not found in the "
-            "database, do not use general knowledge to answer the question; say "
-            "that the searched plant is not found within the database."
+            "database, acknowledge that the plant is not in the database -- do not use general knowledge to answer. "
+            "Based on the information provided, provide general guidance for the user on how to approach their problem. "
         ),
     }
 
